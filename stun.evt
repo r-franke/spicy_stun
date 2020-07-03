@@ -1,4 +1,4 @@
 protocol analyzer spicy::STUN over UDP:
     parse with STUN::Packet,
-    port 3478/stun;
+    port 3478/udp;
 
