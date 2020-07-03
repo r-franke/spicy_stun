@@ -57,7 +57,7 @@ type AttrType = enum {
 
 const VALID_COOKIE = 0x2112a442;
 
-public type Stun = unit {
+public type Packet = unit {
     msg_type: uint16 &convert=MsgType($$);
     msg_length: uint16 {self.remainder = $$;}
     cookie: uint32;
