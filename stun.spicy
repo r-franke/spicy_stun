@@ -1,5 +1,6 @@
 module STUN;
 
+type AddFamily = enum { IPv4 = 0x01, IPv6 = 0x02 };
 type MsgType = enum { REQ = 0x0001, IND = 0x0011, SUC = 0x0101, ERR = 0x0111};
 type AttrType = enum { 
     MAPPED_ADDRESS = 0x0001,
@@ -86,11 +87,65 @@ type Attribute = unit {
 	self.value_padding = padding($$);
 	self.total_size = $$ + self.value_padding;
 	}
-    attr_value: bytes &size=self.total_size;
+    switch (self.attr_type) {
+	#AttrType::MAPPED_ADDRESS -> MAPPED_ADDRESS: {},
+	AttrType::USERNAME -> USERNAME: bytes &size=self.attr_length;
+	AttrType::MESSAGE_INTEGRITY -> HMAC_SHA1: bytes &size=20;
+	#AttrType::ERROR_CODE -> 0x0009,
+	#AttrType::UNKNOWN_ATTRIBUTES -> 0x000A,
+	#AttrType::CHANNEL_NUMBER -> 0x000C,
+	#AttrType::LIFETIME -> 0x000D,
+	#AttrType::XOR_PEER_ADDRESS -> 0x0012,
+	#AttrType::DATA -> 0x0013,
+	#AttrType::REALM -> 0x0014,
+	#AttrType::NONCE -> 0x0015,
+	#AttrType::XOR_RELAYED_ADDRESS -> 0x0016,
+	#AttrType::REQUESTED_ADDRESS_FAMILY -> 0x0017,
+	#AttrType::EVEN_PORT -> 0x0018,
+	#AttrType::REQUESTED_TRANSPORT -> 0x0019,
+	#AttrType::DONT_FRAGMENT -> 0x001A,
+	#AttrType::ACCESS_TOKEN -> 0x001B,
+	#AttrType::MESSAGE_INTEGRITY_SHA256 -> 0x001C,
+	#AttrType::PASSWORD_ALGORITHM -> 0x001D,
+	#AttrType::USERHASH -> 0x001E,
+	#AttrType::XOR_MAPPED_ADDRESS -> 0x0020,
+	#AttrType::RESERVATION_TOKEN -> 0x0022,
+	AttrType::PRIORITY -> PRIORITY: bytes &size=4;
+	AttrType::USE_CANDIDATE -> void;
+	#AttrType::PADDING -> 0x0026,
+	#AttrType::RESPONSE_PORT -> 0x0027,
+	#AttrType::CONNECTION_ID -> 0x002A,
+	#AttrType::ADDITIONAL_ADDRESS_FAMILY -> 0x8000,
+	#AttrType::ADDRESS_ERROR_CODE -> 0x8001,
+	#AttrType::PASSWORD_ALGORITHMS -> 0x8002,
+	#AttrType::ALTERNATE_DOMAIN -> 0x8003,
+	#AttrType::ICMP -> 0x8004,
+	#AttrType::SOFTWARE -> 0x8022,
+	#AttrType::ALTERNATE_SERVER -> 0x8023,
+	#AttrType::TRANSACTION_TRANSMIT_COUNTER -> 0x8025,
+	#AttrType::CACHE_TIMEOUT -> 0x8027,
+	AttrType::FINGERPRINT -> CRC_32: bytes &size=self.attr_length;
+	AttrType::ICE_CONTROLLED -> ICE_CONTROLLED: bytes &size=self.attr_length;
+	AttrType::ICE_CONTROLLING -> ICE_CONTROLLING: bytes &size=self.attr_length;
+	#AttrType::RESPONSE_ORIGIN -> 0x802B,
+	#AttrType::OTHER_ADDRESS -> 0x802C,
+	#AttrType::ECN_CHECK -> 0x802D,
+	#AttrType::THIRD_PARTY_AUTHORIZATION -> 0x802E,
+	#AttrType::MOBILITY_TICKET -> 0x8030,
+	#AttrType::CISCO_STUN_FLOWDATA -> 0xC000,
+	#AttrType::ENF_FLOW_DESCRIPTION -> 0xC001,
+	#AttrType::ENF_NETWORK_STATUS -> 0xC002,
+	#AttrType::GOOG_MISC_INFO -> 0xC059,
+	#AttrType::GOOG_MESSAGE_INTEGRITY_32 -> 0xC05A
+	* -> attr_value: bytes &size=self.total_size;
+    };
+    padding: bytes &size=self.value_padding;
+   
 
     var value_padding: uint16;
     var total_size: uint16;
 };
+
 
 function padding(x: uint16): uint16 {
     if (x % 4 > 0) {
