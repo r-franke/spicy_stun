@@ -90,11 +90,11 @@ public type Packet = unit {
 	}
     }
 
-    on %done %debug {
-	print "Type: %" % self.msg_type;
-	print "Length: %" % self.msg_length;
-	print "Cookie: %" % self.cookie;
-	print "Transaction id: %" % self.trans_id;
+    on %done {
+	print "Type: %s" % self.msg_type;
+	print "Length: %s" % self.msg_length;
+	print "Cookie: %s" % self.cookie;
+	print "Transaction id: %s" % self.trans_id;
 	print "Attributes:";
 	for (attr in self.attributes) {
 	    print(attr);
@@ -134,8 +134,8 @@ type Attribute = unit {
 	#AttrType::LIFETIME -> 0x000D;
 	#AttrType::XOR_PEER_ADDRESS -> 0x0012;
 	#AttrType::DATA -> 0x0013;
-	#AttrType::REALM -> 0x0014;
-	#AttrType::NONCE -> 0x0015;
+	AttrType::REALM -> bytes &size=self.attr_length;
+	AttrType::NONCE -> bytes &size=self.attr_length;
 	#AttrType::XOR_RELAYED_ADDRESS -> 0x0016;
 	#AttrType::REQUESTED_ADDRESS_FAMILY -> 0x0017;
 	#AttrType::EVEN_PORT -> 0x0018;
@@ -157,8 +157,8 @@ type Attribute = unit {
 	#AttrType::PASSWORD_ALGORITHMS -> 0x8002;
 	#AttrType::ALTERNATE_DOMAIN -> 0x8003;
 	#AttrType::ICMP -> 0x8004;
-	AttrType::SOFTWARE -> SOFTWARE: bytes &size=self.attr_length;
-	#AttrType::ALTERNATE_SERVER -> 0x8023;
+	AttrType::SOFTWARE -> DESCRIPTION: bytes &size=self.attr_length;
+	AttrType::ALTERNATE_SERVER -> ALTERNATE_SERVER: MappedAddress(self.attr_length);
 	#AttrType::TRANSACTION_TRANSMIT_COUNTER -> 0x8025;
 	#AttrType::CACHE_TIMEOUT -> 0x8027;
 	AttrType::FINGERPRINT -> CRC_32: bytes &size=self.attr_length;
