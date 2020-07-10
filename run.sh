@@ -1,2 +1,2 @@
 #!/bin/bash
-cat /mnt/local/test_data/4.dat | HILTI_DEBUG=spicy ./spicy-driver /mnt/local/stun.spicy
+cat ./test_data/4.dat | HILTI_DEBUG=spicy spicy-driver stun.spicy

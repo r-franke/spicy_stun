@@ -1,8 +1,6 @@
 module STUN;
 
-import zeek;
-
-type AddFamily = enum { IPv4 = 0x01, IPv6 = 0x02 };
+type AddrFamily = enum { IPv4 = 0x01, IPv6 = 0x02 };
 type MsgType = enum { REQ = 0x0001, IND = 0x0011, SUC = 0x0101, ERR = 0x0111};
 type AttrType = enum { 
     MAPPED_ADDRESS = 0x0001,
@@ -57,18 +55,42 @@ type AttrType = enum {
     };
 
 
-const VALID_COOKIE = 0x2112a442;
+const VALID_COOKIE = 554869826;
+
+#       RFC5389:
+#
+#       0                   1                   2                   3
+#       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |0 0|     STUN Message Type     |         Message Length        |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |                         Magic Cookie                          |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |                                                               |
+#      |                     Transaction ID (96 bits)                  |
+#      |                                                               |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |                        [Attributes,                           |
+#      |                            ...]                               |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 public type Packet = unit {
     msg_type: uint16 &convert=MsgType($$);
-    msg_length: uint16 {self.remainder = $$;}
+    msg_length: uint16;
     cookie: uint32;
     trans_id: bytes &size=12;
     attributes: Attribute[]; 
 
+    on cookie {
+	if ( self.cookie == VALID_COOKIE ) {
+	    #zeek::confirm_protocol();
+	} else {
+	    #zeek::reject_protocol("Not a STUN packet");
+	    print "no";
+	}
+    }
 
-    on %done {
-	zeek::confirm_protocol();
+    on %done %debug {
 	print "Type: %" % self.msg_type;
 	print "Length: %" % self.msg_length;
 	print "Cookie: %" % self.cookie;
@@ -81,13 +103,20 @@ public type Packet = unit {
     }
 
     on %error {
-	zeek::reject_protocol("ERROR IN STUN PARSER");
+	#zeek::reject_protocol("ERROR IN STUN PARSER");
 	print "ERROR";
     }
 
-    var remainder: uint16;
-
 };
+
+#       0                   1                   2                   3
+#       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |         Type                  |            Length             |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |                         Value (variable)...                   |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      https://tools.ietf.org/html/rfc5389#section-15
 
 type Attribute = unit {
     attr_type: uint16 &convert=AttrType($$);
@@ -96,54 +125,54 @@ type Attribute = unit {
 	self.total_size = $$ + self.value_padding;
 	}
     switch (self.attr_type) {
-	#AttrType::MAPPED_ADDRESS -> MAPPED_ADDRESS: {},
+	AttrType::MAPPED_ADDRESS -> MAPPED_ADDRESS: MappedAddress(self.attr_length);
 	AttrType::USERNAME -> USERNAME: bytes &size=self.attr_length;
 	AttrType::MESSAGE_INTEGRITY -> HMAC_SHA1: bytes &size=20;
-	#AttrType::ERROR_CODE -> 0x0009,
-	#AttrType::UNKNOWN_ATTRIBUTES -> 0x000A,
-	#AttrType::CHANNEL_NUMBER -> 0x000C,
-	#AttrType::LIFETIME -> 0x000D,
-	#AttrType::XOR_PEER_ADDRESS -> 0x0012,
-	#AttrType::DATA -> 0x0013,
-	#AttrType::REALM -> 0x0014,
-	#AttrType::NONCE -> 0x0015,
-	#AttrType::XOR_RELAYED_ADDRESS -> 0x0016,
-	#AttrType::REQUESTED_ADDRESS_FAMILY -> 0x0017,
-	#AttrType::EVEN_PORT -> 0x0018,
-	#AttrType::REQUESTED_TRANSPORT -> 0x0019,
-	#AttrType::DONT_FRAGMENT -> 0x001A,
-	#AttrType::ACCESS_TOKEN -> 0x001B,
-	#AttrType::MESSAGE_INTEGRITY_SHA256 -> 0x001C,
-	#AttrType::PASSWORD_ALGORITHM -> 0x001D,
-	#AttrType::USERHASH -> 0x001E,
-	#AttrType::XOR_MAPPED_ADDRESS -> 0x0020,
-	#AttrType::RESERVATION_TOKEN -> 0x0022,
+	AttrType::ERROR_CODE -> ERROR_CODE: ErrorCode(self.attr_length);
+	#AttrType::UNKNOWN_ATTRIBUTES -> 0x000A;
+	#AttrType::CHANNEL_NUMBER -> 0x000C;
+	#AttrType::LIFETIME -> 0x000D;
+	#AttrType::XOR_PEER_ADDRESS -> 0x0012;
+	#AttrType::DATA -> 0x0013;
+	#AttrType::REALM -> 0x0014;
+	#AttrType::NONCE -> 0x0015;
+	#AttrType::XOR_RELAYED_ADDRESS -> 0x0016;
+	#AttrType::REQUESTED_ADDRESS_FAMILY -> 0x0017;
+	#AttrType::EVEN_PORT -> 0x0018;
+	#AttrType::REQUESTED_TRANSPORT -> 0x0019;
+	#AttrType::DONT_FRAGMENT -> 0x001A;
+	#AttrType::ACCESS_TOKEN -> 0x001B;
+	#AttrType::MESSAGE_INTEGRITY_SHA256 -> 0x001C;
+	#AttrType::PASSWORD_ALGORITHM -> 0x001D;
+	#AttrType::USERHASH -> 0x001E;
+	AttrType::XOR_MAPPED_ADDRESS -> XOR_MAPPED_ADDRES: MappedAddress(self.attr_length);
+	#AttrType::RESERVATION_TOKEN -> 0x0022;
 	AttrType::PRIORITY -> PRIORITY: bytes &size=4;
 	AttrType::USE_CANDIDATE -> void;
-	#AttrType::PADDING -> 0x0026,
-	#AttrType::RESPONSE_PORT -> 0x0027,
-	#AttrType::CONNECTION_ID -> 0x002A,
-	#AttrType::ADDITIONAL_ADDRESS_FAMILY -> 0x8000,
-	#AttrType::ADDRESS_ERROR_CODE -> 0x8001,
-	#AttrType::PASSWORD_ALGORITHMS -> 0x8002,
-	#AttrType::ALTERNATE_DOMAIN -> 0x8003,
-	#AttrType::ICMP -> 0x8004,
-	#AttrType::SOFTWARE -> 0x8022,
-	#AttrType::ALTERNATE_SERVER -> 0x8023,
-	#AttrType::TRANSACTION_TRANSMIT_COUNTER -> 0x8025,
-	#AttrType::CACHE_TIMEOUT -> 0x8027,
+	#AttrType::PADDING -> 0x0026;
+	#AttrType::RESPONSE_PORT -> 0x0027;
+	#AttrType::CONNECTION_ID -> 0x002A;
+	#AttrType::ADDITIONAL_ADDRESS_FAMILY -> 0x8000;
+	#AttrType::ADDRESS_ERROR_CODE -> 0x8001;
+	#AttrType::PASSWORD_ALGORITHMS -> 0x8002;
+	#AttrType::ALTERNATE_DOMAIN -> 0x8003;
+	#AttrType::ICMP -> 0x8004;
+	#AttrType::SOFTWARE -> 0x8022;
+	#AttrType::ALTERNATE_SERVER -> 0x8023;
+	#AttrType::TRANSACTION_TRANSMIT_COUNTER -> 0x8025;
+	#AttrType::CACHE_TIMEOUT -> 0x8027;
 	AttrType::FINGERPRINT -> CRC_32: bytes &size=self.attr_length;
 	AttrType::ICE_CONTROLLED -> ICE_CONTROLLED: bytes &size=self.attr_length;
 	AttrType::ICE_CONTROLLING -> ICE_CONTROLLING: bytes &size=self.attr_length;
-	#AttrType::RESPONSE_ORIGIN -> 0x802B,
-	#AttrType::OTHER_ADDRESS -> 0x802C,
-	#AttrType::ECN_CHECK -> 0x802D,
-	#AttrType::THIRD_PARTY_AUTHORIZATION -> 0x802E,
-	#AttrType::MOBILITY_TICKET -> 0x8030,
-	#AttrType::CISCO_STUN_FLOWDATA -> 0xC000,
-	#AttrType::ENF_FLOW_DESCRIPTION -> 0xC001,
-	#AttrType::ENF_NETWORK_STATUS -> 0xC002,
-	#AttrType::GOOG_MISC_INFO -> 0xC059,
+	#AttrType::RESPONSE_ORIGIN -> 0x802B;
+	#AttrType::OTHER_ADDRESS -> 0x802C;
+	#AttrType::ECN_CHECK -> 0x802D;
+	#AttrType::THIRD_PARTY_AUTHORIZATION -> 0x802E;
+	#AttrType::MOBILITY_TICKET -> 0x8030;
+	#AttrType::CISCO_STUN_FLOWDATA -> 0xC000;
+	#AttrType::ENF_FLOW_DESCRIPTION -> 0xC001;
+	#AttrType::ENF_NETWORK_STATUS -> 0xC002;
+	#AttrType::GOOG_MISC_INFO -> 0xC059;
 	#AttrType::GOOG_MESSAGE_INTEGRITY_32 -> 0xC05A
 	* -> attr_value: bytes &size=self.total_size;
     };
@@ -154,6 +183,21 @@ type Attribute = unit {
     var total_size: uint16;
 };
 
+# https://tools.ietf.org/html/rfc5389#section-15.1
+type MappedAddress = unit(length: uint16) {
+    nulls: uint8;
+    family: uint8 &convert=AddrFamily($$);
+    x_port: uint16;
+    ipv4: addr &ipv4 if (self.family == AddrFamily::IPv4);
+    ipv6: addr &ipv6 if (self.family == AddrFamily::IPv6);
+};
+
+# https://tools.ietf.org/html/rfc5389#section-15.6
+type ErrorCode = unit(length: uint16) {
+    class: bytes &size=3;
+    number: uint8;
+    reason: bytes &size=(length - 4);
+};
 
 function padding(x: uint16): uint16 {
     if (x % 4 > 0) {
