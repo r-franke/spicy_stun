@@ -129,7 +129,7 @@ type Attribute = unit {
 	AttrType::USERNAME -> USERNAME: bytes &size=self.attr_length;
 	AttrType::MESSAGE_INTEGRITY -> HMAC_SHA1: bytes &size=20;
 	AttrType::ERROR_CODE -> ERROR_CODE: ErrorCode(self.attr_length);
-	#AttrType::UNKNOWN_ATTRIBUTES -> 0x000A;
+	AttrType::UNKNOWN_ATTRIBUTES -> UNKNOWN_ATTRIBUTES: UnknownAttributes(self.attr_length);
 	#AttrType::CHANNEL_NUMBER -> 0x000C;
 	#AttrType::LIFETIME -> 0x000D;
 	#AttrType::XOR_PEER_ADDRESS -> 0x0012;
@@ -157,7 +157,7 @@ type Attribute = unit {
 	#AttrType::PASSWORD_ALGORITHMS -> 0x8002;
 	#AttrType::ALTERNATE_DOMAIN -> 0x8003;
 	#AttrType::ICMP -> 0x8004;
-	#AttrType::SOFTWARE -> 0x8022;
+	AttrType::SOFTWARE -> SOFTWARE: bytes &size=self.attr_length;
 	#AttrType::ALTERNATE_SERVER -> 0x8023;
 	#AttrType::TRANSACTION_TRANSMIT_COUNTER -> 0x8025;
 	#AttrType::CACHE_TIMEOUT -> 0x8027;
@@ -197,6 +197,11 @@ type ErrorCode = unit(length: uint16) {
     class: bytes &size=3;
     number: uint8;
     reason: bytes &size=(length - 4);
+};
+
+# https://tools.ietf.org/html/rfc5389#section-15.9
+type UnknownAttributes = unit(length: uint16) {
+    unknowns: uint16[length / 2];
 };
 
 function padding(x: uint16): uint16 {
