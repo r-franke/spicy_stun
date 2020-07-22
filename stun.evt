@@ -1,4 +1,7 @@
+import STUN;
+
 protocol analyzer spicy::STUN over UDP:
     parse with STUN::Packet,
     port 3478/udp;
 
+on STUN::Packet -> event stun::packet($conn, self.cookie);

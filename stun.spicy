@@ -1,5 +1,7 @@
 module STUN;
 
+import zeek;
+
 type AddrFamily = enum { IPv4 = 0x01, IPv6 = 0x02 };
 type MsgType = enum { REQ = 0x0001, IND = 0x0011, SUC = 0x0101, ERR = 0x0111};
 type AttrType = enum { 
@@ -83,10 +85,9 @@ public type Packet = unit {
 
     on cookie {
 	if ( self.cookie == VALID_COOKIE ) {
-	    #zeek::confirm_protocol();
+	    zeek::confirm_protocol();
 	} else {
-	    #zeek::reject_protocol("Not a STUN packet");
-	    print "no";
+	    zeek::reject_protocol("Not a STUN packet");
 	}
     }
 
