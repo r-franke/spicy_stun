@@ -4,4 +4,5 @@ protocol analyzer spicy::STUN over UDP:
     parse with STUN::Packet,
     port 3478/udp;
 
-on STUN::Packet -> event stun::packet($conn, self.cookie);
+on STUN::Packet if(self.msg_type == STUN::MsgType(0x001)) -> event stun::binding_request($conn, self.cookie, self.msg_type);
+on STUN::Packet -> event stun::packet($conn, self.cookie, self.msg_type);

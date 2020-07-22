@@ -1,14 +1,12 @@
 module STUN;
 
-# events:
-# - indication
-# - request
-# - response
-#  - succes
-#  - error
-
-event stun::packet(c: connection, cookie: int)
+event stun::packet(c: connection, cookie: int, msg_type: STUN::MsgType)
   {
-      print "STUN packet", c$id, cookie;
+      print "STUN packet", c$id, cookie, msg_type;
   }
 
+
+event stun::binding_request(c: connection, cookie: int, msg_type: STUN::MsgType)
+  {
+      print "STUN binding request", c$id, cookie, msg_type;
+  }

@@ -3,7 +3,16 @@ module STUN;
 import zeek;
 
 type AddrFamily = enum { IPv4 = 0x01, IPv6 = 0x02 };
-type MsgType = enum { REQ = 0x0001, IND = 0x0011, SUC = 0x0101, ERR = 0x0111};
+public type MsgType = enum { 
+    REQ = 0x0001, 
+    IND = 0x0011, 
+    SUC = 0x0101, 
+    ERR = 0x0111, 
+    ALLOCATE_REQ = 0x0003, 
+    ALLOCATE_SUC = 0x0103,
+    ALLOCATE_ERR = 0x0113
+    };
+
 type AttrType = enum { 
     MAPPED_ADDRESS = 0x0001,
     USERNAME = 0x0006,
