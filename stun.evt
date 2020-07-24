@@ -4,5 +4,11 @@ protocol analyzer spicy::STUN over UDP:
     parse with STUN::Packet,
     port 3478/udp;
 
-on STUN::Packet if(self.msg_type == STUN::MsgType(0x001)) -> event stun::binding_request($conn, self.cookie, self.msg_type);
-on STUN::Packet -> event stun::packet($conn, self.cookie, self.msg_type);
+on STUN::Packet if(self.msg_type == STUN::MsgType(0x0001)) -> event stun::binding_request($conn, self.cookie, self.msg_type);
+on STUN::Packet if(self.msg_type == STUN::MsgType(0x0011)) -> event stun::indication($conn, self.cookie, self.msg_type);
+on STUN::Packet if(self.msg_type == STUN::MsgType(0x0101)) -> event stun::binding_success($conn, self.cookie, self.msg_type);
+on STUN::Packet if(self.msg_type == STUN::MsgType(0x0111)) -> event stun::binding_error($conn, self.cookie, self.msg_type);
+on STUN::Packet if(self.msg_type == STUN::MsgType(0x0003)) -> event stun::allocate_request($conn, self.cookie, self.msg_type);
+on STUN::Packet if(self.msg_type == STUN::MsgType(0x0103)) -> event stun::allocate_success($conn, self.cookie, self.msg_type);
+on STUN::Packet if(self.msg_type == STUN::MsgType(0x0113)) -> event stun::allocate_error($conn, self.cookie, self.msg_type);
+# on STUN::Packet -> event stun::packet($conn, self.cookie, self.msg_type);

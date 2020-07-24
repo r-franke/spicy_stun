@@ -4,10 +4,10 @@ import zeek;
 
 type AddrFamily = enum { IPv4 = 0x01, IPv6 = 0x02 };
 public type MsgType = enum { 
-    REQ = 0x0001, 
+    BINDING_REQ = 0x0001, 
     IND = 0x0011, 
-    SUC = 0x0101, 
-    ERR = 0x0111, 
+    BINDING_SUC = 0x0101, 
+    BINDING_ERR = 0x0111, 
     ALLOCATE_REQ = 0x0003, 
     ALLOCATE_SUC = 0x0103,
     ALLOCATE_ERR = 0x0113
@@ -102,20 +102,20 @@ public type Packet = unit {
 
     on %done {
 	print "Type: %s" % self.msg_type;
-	print "Length: %s" % self.msg_length;
-	print "Cookie: %s" % self.cookie;
-	print "Transaction id: %s" % self.trans_id;
-	print "Attributes:";
-	for (attr in self.attributes) {
-	    print(attr);
-	}
+# 	print "Length: %s" % self.msg_length;
+# 	print "Cookie: %s" % self.cookie;
+# 	print "Transaction id: %s" % self.trans_id;
+# 	print "Attributes:";
+# 	for (attr in self.attributes) {
+# 	    print(attr);
+# 	}
 
     }
 
-    on %error {
-	#zeek::reject_protocol("ERROR IN STUN PARSER");
-	print "ERROR";
-    }
+    # on %error {
+    #     #zeek::reject_protocol("ERROR IN STUN PARSER");
+    #     print "ERROR";
+    # }
 
 };
 
